@@ -108,10 +108,10 @@ namespace Ryujinx.Ui
 
             _exitEvent = new ManualResetEvent(false);
 
-            _hideCursorOnIdle = ConfigurationState.Instance.HideCursorOnIdle;
+            _hideCursorOnIdle = GlobalConfigurationState.Instance.HideCursorOnIdle;
             _lastCursorMoveTime = Stopwatch.GetTimestamp();
 
-            ConfigurationState.Instance.HideCursorOnIdle.Event += HideCursorStateChanged;
+            GlobalConfigurationState.Instance.HideCursorOnIdle.Event += HideCursorStateChanged;
         }
 
         private void HideCursorStateChanged(object sender, ReactiveEventArgs<bool> state)
@@ -154,7 +154,7 @@ namespace Ryujinx.Ui
 
         private void GLRenderer_Destroyed(object sender, EventArgs e)
         {
-            ConfigurationState.Instance.HideCursorOnIdle.Event -= HideCursorStateChanged;
+            GlobalConfigurationState.Instance.HideCursorOnIdle.Event -= HideCursorStateChanged;
 
             _dsuClient?.Dispose();
             Dispose();
@@ -188,7 +188,7 @@ namespace Ryujinx.Ui
                     {
                         if (keyboard.IsKeyDown(OpenTK.Input.Key.Escape))
                         {
-                            if (!ConfigurationState.Instance.ShowConfirmExit || GtkDialog.CreateExitDialog())
+                            if (!GlobalConfigurationState.Instance.ShowConfirmExit || GtkDialog.CreateExitDialog())
                             {
                                 Exit();
                             }
@@ -210,8 +210,8 @@ namespace Ryujinx.Ui
             {
                 if (toggleDockedMode)
                 {
-                    ConfigurationState.Instance.System.EnableDockedMode.Value =
-                        !ConfigurationState.Instance.System.EnableDockedMode.Value;
+                    GameConfigurationState.Instance.System.EnableDockedMode.Value =
+                        !GameConfigurationState.Instance.System.EnableDockedMode.Value;
                 }
             }
 
@@ -272,6 +272,8 @@ namespace Ryujinx.Ui
                 string titleArchSection = _device.Application.TitleIs64Bit ? " (64-bit)" : " (32-bit)";
 
                 parent.Title = $"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}";
+
+                LoggerModule.Initialize();
             });
 
             Thread renderLoopThread = new Thread(Render)
@@ -290,6 +292,9 @@ namespace Ryujinx.Ui
 
             renderLoopThread.Join();
             nvStutterWorkaround.Join();
+
+            GameConfigurationState.Instance.LoadDefault();
+            LoggerModule.Initialize();
 
             Exit();
         }
@@ -390,6 +395,10 @@ namespace Ryujinx.Ui
 
         public void Exit()
         {
+            GameConfigurationState.Instance.LoadDefault();
+
+            LoggerModule.Initialize();
+
             _dsuClient?.Dispose();
 
             if (_isStopped)
@@ -457,7 +466,7 @@ namespace Ryujinx.Ui
 
                 if (_ticks >= _ticksPerFrame)
                 {
-                    string dockedMode = ConfigurationState.Instance.System.EnableDockedMode ? "Docked" : "Handheld";
+                    string dockedMode = GameConfigurationState.Instance.System.EnableDockedMode ? "Docked" : "Handheld";
                     float scale = Graphics.Gpu.GraphicsConfig.ResScale;
                     if (scale != 1)
                     {
@@ -467,7 +476,7 @@ namespace Ryujinx.Ui
                     StatusUpdatedEvent?.Invoke(this, new StatusUpdatedEventArgs(
                         _device.EnableDeviceVsync,
                         dockedMode,
-                        ConfigurationState.Instance.Graphics.AspectRatio.Value.ToText(),
+                        GameConfigurationState.Instance.Graphics.AspectRatio.Value.ToText(),
                         $"Game: {_device.Statistics.GetGameFrameRate():00.00} FPS",
                         $"FIFO: {_device.Statistics.GetFifoPercent():0.00} %",
                         $"GPU:  {_renderer.GpuVendor}"));
@@ -530,7 +539,7 @@ namespace Ryujinx.Ui
 
             MotionDevice motionDevice = new MotionDevice(_dsuClient);
 
-            foreach (InputConfig inputConfig in ConfigurationState.Instance.Hid.InputConfig.Value)
+            foreach (InputConfig inputConfig in GameConfigurationState.Instance.Hid.InputConfig.Value)
             {
                 ControllerKeys   currentButton = 0;
                 JoystickPosition leftJoystick  = new JoystickPosition();
@@ -571,7 +580,7 @@ namespace Ryujinx.Ui
                             Dy = rightJoystickDy
                         };
 
-                        if (ConfigurationState.Instance.Hid.EnableKeyboard)
+                        if (GameConfigurationState.Instance.Hid.EnableKeyboard)
                         {
                             hidKeyboard = keyboardController.GetKeysDown();
                         }
@@ -585,7 +594,7 @@ namespace Ryujinx.Ui
                             };
                         }
 
-                        if (ConfigurationState.Instance.Hid.EnableKeyboard)
+                        if (GameConfigurationState.Instance.Hid.EnableKeyboard)
                         {
                             _device.Hid.Keyboard.Update(hidKeyboard.Value);
                         }
@@ -661,7 +670,7 @@ namespace Ryujinx.Ui
             _device.Hid.Npads.UpdateSixAxis(motionInputs);
             _device.TamperMachine.UpdateInput(gamepadInputs);
 
-            if(_isFocused)
+            if (_isFocused)
             {
                 // Hotkeys
                 HotkeyButtons currentHotkeyButtons = KeyboardController.GetHotkeyButtons(OpenTK.Input.Keyboard.GetState());
@@ -684,7 +693,7 @@ namespace Ryujinx.Ui
             // OpenTK always captures mouse events, even if out of focus, so check if window is focused.
             if (_isFocused && _mousePressed)
             {
-                float aspectWidth = SwitchPanelHeight * ConfigurationState.Instance.Graphics.AspectRatio.Value.ToFloat();
+                float aspectWidth = SwitchPanelHeight * GameConfigurationState.Instance.Graphics.AspectRatio.Value.ToFloat();
 
                 int screenWidth  = AllocatedWidth;
                 int screenHeight = AllocatedHeight;

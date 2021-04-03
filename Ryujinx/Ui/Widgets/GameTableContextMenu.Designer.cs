@@ -4,6 +4,7 @@ namespace Ryujinx.Ui.Widgets
 {
     public partial class GameTableContextMenu : Menu
     {
+        private MenuItem _openGameConfigurationMenuItem;
         private MenuItem _openSaveUserDirMenuItem;
         private MenuItem _openSaveDeviceDirMenuItem;
         private MenuItem _openSaveBcatDirMenuItem;
@@ -24,6 +25,16 @@ namespace Ryujinx.Ui.Widgets
 
         private void InitializeComponent()
         {
+
+            //
+            // _changeGameConfiguration
+            //
+            _openGameConfigurationMenuItem = new MenuItem("Open Game Configuration")
+            {
+                TooltipText = "Open emulator settings for this title."
+            };
+            _openGameConfigurationMenuItem.Activated += OpenGameConfiguration_Clicked;
+
             //
             // _openSaveUserDirMenuItem
             //
@@ -181,6 +192,8 @@ namespace Ryujinx.Ui.Widgets
             _manageSubMenu.Append(_openPtcDirMenuItem);
             _manageSubMenu.Append(_openShaderCacheDirMenuItem);
 
+            Add(_openGameConfigurationMenuItem);
+            Add(new SeparatorMenuItem());
             Add(_openSaveUserDirMenuItem);
             Add(_openSaveDeviceDirMenuItem);
             Add(_openSaveBcatDirMenuItem);

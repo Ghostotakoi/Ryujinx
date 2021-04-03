@@ -1,4 +1,5 @@
 ﻿using Ryujinx.Common;
+using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Logging;
 using System;
 using System.IO;
@@ -9,15 +10,15 @@ namespace Ryujinx.Configuration
     {
         public static void Initialize()
         {
-            ConfigurationState.Instance.Logger.EnableDebug.Event       += ReloadEnableDebug;
-            ConfigurationState.Instance.Logger.EnableStub.Event        += ReloadEnableStub;
-            ConfigurationState.Instance.Logger.EnableInfo.Event        += ReloadEnableInfo;
-            ConfigurationState.Instance.Logger.EnableWarn.Event        += ReloadEnableWarning;
-            ConfigurationState.Instance.Logger.EnableError.Event       += ReloadEnableError;
-            ConfigurationState.Instance.Logger.EnableGuest.Event       += ReloadEnableGuest;
-            ConfigurationState.Instance.Logger.EnableFsAccessLog.Event += ReloadEnableFsAccessLog;
-            ConfigurationState.Instance.Logger.FilteredClasses.Event   += ReloadFilteredClasses;
-            ConfigurationState.Instance.Logger.EnableFileLog.Event     += ReloadFileLogger;
+            GameConfigurationState.Instance.Logger.EnableDebug.Event       += ReloadEnableDebug;
+            GameConfigurationState.Instance.Logger.EnableStub.Event        += ReloadEnableStub;
+            GameConfigurationState.Instance.Logger.EnableInfo.Event        += ReloadEnableInfo;
+            GameConfigurationState.Instance.Logger.EnableWarn.Event        += ReloadEnableWarning;
+            GameConfigurationState.Instance.Logger.EnableError.Event       += ReloadEnableError;
+            GameConfigurationState.Instance.Logger.EnableGuest.Event       += ReloadEnableGuest;
+            GameConfigurationState.Instance.Logger.EnableFsAccessLog.Event += ReloadEnableFsAccessLog;
+            GameConfigurationState.Instance.Logger.FilteredClasses.Event   += ReloadFilteredClasses;
+            GameConfigurationState.Instance.Logger.EnableFileLog.Event     += ReloadFileLogger;
         }
 
         private static void ReloadEnableDebug(object sender, ReactiveEventArgs<bool> e)

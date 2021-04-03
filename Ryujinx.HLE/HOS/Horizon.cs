@@ -9,6 +9,7 @@ using Ryujinx.Audio.Output;
 using Ryujinx.Audio.Renderer.Device;
 using Ryujinx.Audio.Renderer.Server;
 using Ryujinx.Common;
+using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Logging;
 using Ryujinx.Configuration;
 using Ryujinx.HLE.FileSystem.Content;
@@ -173,7 +174,7 @@ namespace Ryujinx.HLE.HOS
             TimeSpanType systemTime = TimeSpanType.FromSeconds((long)rtcValue);
 
             // Configure and setup internal offset
-            TimeSpanType internalOffset = TimeSpanType.FromSeconds(ConfigurationState.Instance.System.SystemTimeOffset);
+            TimeSpanType internalOffset = TimeSpanType.FromSeconds(GameConfigurationState.Instance.System.SystemTimeOffset);
 
             TimeSpanType systemTimeOffset = new TimeSpanType(systemTime.NanoSeconds + internalOffset.NanoSeconds);
 
@@ -213,7 +214,14 @@ namespace Ryujinx.HLE.HOS
 
             SurfaceFlinger = new SurfaceFlinger(device);
 
-            ConfigurationState.Instance.System.EnableDockedMode.Event += OnDockedModeChange;
+            if (GameConfigurationState.Instance.Overrides(nameof(GlobalConfigurationState.Instance.System.EnableDockedMode)))
+            {
+                GameConfigurationState.Instance.System.EnableDockedMode.Event += OnDockedModeChange;
+            }
+            else
+            {
+                GlobalConfigurationState.Instance.System.EnableDockedMode.Event += OnDockedModeChange;
+            }
 
             InitLibHacHorizon();
             InitializeAudioRenderer();
@@ -320,8 +328,7 @@ namespace Ryujinx.HLE.HOS
                 SignalDisplayResolutionChange();
 
                 // Reconfigure controllers
-                Device.Hid.RefreshInputConfig(ConfigurationState.Instance.Hid.InputConfig.Value);
-
+                Device.Hid.RefreshInputConfig(GameConfigurationState.Instance.Hid.InputConfig.Value);
                 Logger.Info?.Print(LogClass.Application, $"IsDocked toggled to: {State.DockedMode}");
             }
         }
@@ -378,7 +385,8 @@ namespace Ryujinx.HLE.HOS
         {
             if (!_isDisposed && disposing)
             {
-                ConfigurationState.Instance.System.EnableDockedMode.Event -= OnDockedModeChange;
+                GlobalConfigurationState.Instance.System.EnableDockedMode.Event -= OnDockedModeChange;
+                GameConfigurationState.Instance.System.EnableDockedMode.Event   -= OnDockedModeChange;
 
                 _isDisposed = true;
 
